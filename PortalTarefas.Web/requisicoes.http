@@ -1,0 +1,43 @@
+@host = https://localhost:7080
+
+### 1 Minimal API
+GET {{host}}/api/diagnostico/ping
+
+### 2 Controller equivalente
+GET {{host}}/api/diagnostico-mvc/ping
+
+### 3 Cadastro válido
+POST {{host}}/api/tarefas
+Content-Type: application/json
+X-Client-Id: aluno-01
+
+{ "titulo": "Estudar pipeline", "descricao": "Ler a documentação", "situacao": "Pendente" }
+
+### 4 Cadastro inválido (título vazio)
+POST {{host}}/api/tarefas
+Content-Type: application/json
+
+{ "titulo": "", "situacao": "Pendente" }
+
+### 5 Rota inválida
+GET {{host}}/api/tarefas/abc
+
+### 6 Filtro por query e cabeçalho opcional
+GET {{host}}/api/tarefas?situacao=Pendente
+X-Client-Id: aluno-01
+
+### 7 Exceção controlada
+GET {{host}}/api/diagnostico/erro
+
+### 8 CORS: origem autorizada
+GET {{host}}/api/tarefas
+Origin: http://localhost:5173
+
+### 9 CORS: origem não autorizada
+GET {{host}}/api/tarefas
+Origin: http://site-nao-autorizado.example
+### 10 Tarefa existente (Fig. 1.1)
+GET {{host}}/api/tarefas/014fb976-4180-452c-b4ac-b53757bd32d5
+
+### 11 Id inexistente (Fig. 1.3)
+GET {{host}}/api/tarefas/00000000-0000-0000-0000-000000000001

@@ -1,0 +1,65 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet restore
+      - run: dotnet build --no-restore -c Release
+      - run: dotnet test --no-build -c Release --filter "Category!=Integracao"
+      - run: dotnet list package --include-transitive > inventario-dependencias.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: inventario-dependencias
+          path: inventario-dependencias.txt
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: PortalTarefas.Frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: PortalTarefas.Frontend/package-lock.json
+      - run: npm ci
+      - run: npm test --if-present
+      - run: npm run build
+
+  imagem:
+    needs: [backend, frontend]          # gate: só roda se os dois jobs passarem
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build da imagem (tag = commit)
+        run: |
+          IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}:${GITHUB_SHA}"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+          docker build --label org.opencontainers.image.revision="$GITHUB_SHA" -t "$IMAGE" .
+      - name: Smoke test (liveness)
+        run: |
+          docker run -d --name smoke -p 8080:8080 -e ConnectionStrings__DefaultConnection="Server=ci-sem-banco" "$IMAGE"
+          curl --retry 15 --retry-delay 2 --retry-connrefused -fsS http://localhost:8080/health/live
+      - name: Publicar no GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker push "$IMAGE"

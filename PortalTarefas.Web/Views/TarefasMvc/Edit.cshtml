@@ -1,0 +1,4 @@
+@model TarefaInputModel
+@{ ViewData["Title"] = "Editar tarefa"; }
+<h1>Editar tarefa</h1>
+<form asp-action="Edit" asp-route-id="@ViewData["Id"]" method="post"><partial name="_Form" /></form>

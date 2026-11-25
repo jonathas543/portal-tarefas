@@ -1,0 +1,14 @@
+@model IReadOnlyList<TarefaViewModel>
+@if (Model.Any())
+{
+    <aside class="alerta">
+        <h2>Tarefas vencidas</h2>
+        <ul>
+        @foreach (var t in Model)
+        {
+            <li><a asp-controller="TarefasMvc" asp-action="Details" asp-route-id="@t.Id">@t.Titulo</a>
+                (@t.Prazo.ToString("dd/MM/yyyy"))</li>
+        }
+        </ul>
+    </aside>
+}

@@ -1,0 +1,9 @@
+body { font-family: Arial, sans-serif; margin: 0; }
+nav { background: #1f3b73; padding: .75rem 1rem; }
+nav a { color: #fff; margin-right: 1rem; text-decoration: none; }
+main { padding: 1rem; max-width: 52rem; margin: auto; }
+footer { text-align: center; color: #555; padding: 1rem; }
+.erro { color: #b00020; display: block; }
+.tarefa { border: 1px solid #ccc; border-radius: 4px; padding: .5rem 1rem; margin-bottom: .5rem; }
+.tarefa.vencida { border-color: #b00020; }
+.alerta { background: #fff4e5; padding: .5rem 1rem; margin-bottom: 1rem; }

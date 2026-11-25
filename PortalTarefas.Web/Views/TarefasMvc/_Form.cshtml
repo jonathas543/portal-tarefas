@@ -1,0 +1,23 @@
+@model TarefaInputModel
+<div asp-validation-summary="ModelOnly" class="erro"></div>
+<div>
+    <label asp-for="Titulo"></label>
+    <input asp-for="Titulo" />
+    <span asp-validation-for="Titulo" class="erro"></span>
+</div>
+<div>
+    <label asp-for="Descricao"></label>
+    <textarea asp-for="Descricao"></textarea>
+    <span asp-validation-for="Descricao" class="erro"></span>
+</div>
+<div>
+    <label asp-for="Prioridade"></label>
+    <select asp-for="Prioridade" asp-items="Html.GetEnumSelectList<Prioridade>()"></select>
+    <span asp-validation-for="Prioridade" class="erro"></span>
+</div>
+<div>
+    <label asp-for="Prazo"></label>
+    <input asp-for="Prazo" />
+    <span asp-validation-for="Prazo" class="erro"></span>
+</div>
+<button type="submit">Salvar</button>

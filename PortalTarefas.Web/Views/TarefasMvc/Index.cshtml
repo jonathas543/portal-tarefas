@@ -1,0 +1,12 @@
+@model IReadOnlyList<TarefaViewModel>
+@{ ViewData["Title"] = "Tarefas"; }
+<h1>Tarefas</h1>
+@await Component.InvokeAsync("TarefasVencidas", new { maximo = 3 })
+@if (!Model.Any())
+{
+    <p>Nenhuma tarefa cadastrada.</p>
+}
+@foreach (var t in Model)
+{
+    <partial name="_TarefaResumo" model="t" />
+}

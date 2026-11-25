@@ -1,0 +1,6 @@
+@model TarefaViewModel
+@{ ViewData["Title"] = Model.Titulo; }
+<partial name="_TarefaResumo" model="Model" />
+<p>@(Model.Descricao ?? "Sem descrição.")</p>
+<a asp-action="Edit" asp-route-id="@Model.Id">Editar</a> |
+<a asp-action="Index">Voltar</a>

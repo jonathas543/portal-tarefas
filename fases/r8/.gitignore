@@ -1,0 +1,12 @@
+# segredos e arquivos locais
+.env
+*.user
+scripts/.senhas-dev.ps1
+evidencias/
+.fase-*
+
+# build
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/

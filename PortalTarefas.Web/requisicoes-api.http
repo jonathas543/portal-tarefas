@@ -1,0 +1,25 @@
+@host = https://localhost:7000
+
+### Listagem paginada
+GET {{host}}/api/tarefas?pagina=1&tamanho=2&ordenarPor=prazo&direcao=desc
+
+### Tamanho acima do limite (400)
+GET {{host}}/api/tarefas?tamanho=51
+
+### Campo de ordenação não permitido (400)
+GET {{host}}/api/tarefas?ordenarPor=id
+
+### Dois filtros combinados
+GET {{host}}/api/tarefas?situacao=Pendente&busca=api
+
+### Página vazia
+GET {{host}}/api/tarefas?pagina=99
+
+### Recurso inexistente (404)
+GET {{host}}/api/tarefas/00000000-0000-0000-0000-000000000001
+
+### Criação (201 + Location)
+POST {{host}}/api/tarefas
+Content-Type: application/json
+
+{ "titulo": "Revisar contrato", "prioridade": "Normal", "prazo": "2026-12-20" }

@@ -1,0 +1,5 @@
+@model TarefaViewModel
+<article class="tarefa @(Model.Vencida ? "vencida" : "")">
+    <h2><a asp-action="Details" asp-route-id="@Model.Id">@Model.Titulo</a></h2>
+    <p>@Model.Prioridade · prazo @Model.Prazo.ToString("dd/MM/yyyy") · @Model.Situacao</p>
+</article>
