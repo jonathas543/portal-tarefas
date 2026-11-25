@@ -91,18 +91,22 @@ Seed__UsuarioSenha=
     Compilar
 
     # ---------------------------------------------------------------- Fig. 8.1 – clone novo compila
-    Figura 'Fig_8_1' 'Clone novo: dotnet build e npm ci && npm run build concluem sem erros'
     $clone = Join-Path $env:TEMP 'portaltarefas-clone'
     if (Test-Path $clone) { Remove-Item $clone -Recurse -Force }
-    if (Get-Command git -ErrorAction SilentlyContinue) {
+    $temGit = [bool](Get-Command git -ErrorAction SilentlyContinue)
+    if ($temGit) {
         Push-Location $Raiz
         try {
-            if (-not (Test-Path (Join-Path $Raiz '.git'))) { & git init -q -b main | Out-Null }
-            & git add -A | Out-Null
-            & git -c user.name='Jonathas da Silva Nunes' -c user.email='jonathas@portal.local' commit -q -m 'Portal de Tarefas: relatórios 1 a 8' 2>$null | Out-Null
-            Write-Host "PS> git clone $Raiz $clone" -ForegroundColor Gray
-            & git clone -q $Raiz $clone
+            if (-not (Test-Path (Join-Path $Raiz '.git'))) { & git init -q -b main *> $null }
+            & git -c core.autocrlf=false add -A *> $null
+            & git -c core.autocrlf=false -c user.name='Jonathas da Silva Nunes' -c user.email='jonathas@portal.local' commit -q -m 'Portal de Tarefas: relatórios 1 a 8' *> $null
         } finally { Pop-Location }
+    }
+    Figura 'Fig_8_1' 'Clone novo: dotnet build e npm ci && npm run build concluem sem erros'
+    if ($temGit) {
+        Write-Host "PS> git clone $Raiz $clone" -ForegroundColor Gray
+        & git clone -q $Raiz $clone *> $null
+        Push-Location $clone; Write-Host ("  commit: " + (& git log --oneline -1)); Pop-Location
     } else {
         Write-Host 'git não encontrado: cópia limpa sem bin/obj/node_modules (robocopy)' -ForegroundColor DarkYellow
         & robocopy $Raiz $clone /E /XD bin obj node_modules dist .git evidencias /NFL /NDL /NJH /NJS | Out-Null
@@ -124,10 +128,11 @@ Seed__UsuarioSenha=
     Remove-Item env:ConnectionStrings__DefaultConnection -ErrorAction SilentlyContinue
     $erro = Join-Path $Tmp 'prod-sem-cs.err.log'
     $p = Start-Process -FilePath $exe -WorkingDirectory $Web -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $Tmp 'prod-sem-cs.log') -RedirectStandardError $erro
+    $null = $p.Handle      # mantém o handle para ler o ExitCode depois
     if (-not $p.WaitForExit(20000)) { Stop-Process -Id $p.Id -Force; Write-Host 'A aplicação NÃO falhou como esperado.' -ForegroundColor Red }
     $env:ASPNETCORE_ENVIRONMENT = 'Development'
     Write-Host "Código de saída do processo: $($p.ExitCode)" -ForegroundColor Yellow
-    Get-Content $erro -Encoding UTF8 | Select-Object -First 6 | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
+    Get-Content $erro -Encoding Oem | Select-Object -First 6 | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
     Capturar 'Fig_8_4'
 
     # ---------------------------------------------------------------- Fig. 8.2 / 8.3 – Docker
