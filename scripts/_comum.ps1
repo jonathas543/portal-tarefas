@@ -32,14 +32,44 @@ public static class JanelaCaptura {
     [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
     [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
     [DllImport("dwmapi.dll")] public static extern int DwmGetWindowAttribute(IntPtr h, int attr, out RECT r, int size);
+    [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr h, IntPtr hdc, uint flags);
+    [DllImport("user32.dll")] public static extern bool IsIconic(IntPtr h);
 }
 "@
 }
 [void][JanelaCaptura]::SetProcessDPIAware()
 
 function Capturar([string]$Nome) {
-    # Captura a janela que está em primeiro plano (o VS Code, quando o script roda no terminal dele)
+    # Captura a janela do VS Code (onde o script roda) mesmo que outra janela esteja na frente.
     Start-Sleep -Milliseconds 900
+    $arq = Join-Path $Evid "$Nome.png"
+    $code = Get-Process Code -ErrorAction SilentlyContinue |
+            Where-Object { $_.MainWindowHandle -ne 0 -and $_.MainWindowTitle -like '*Visual Studio Code*' -and -not [JanelaCaptura]::IsIconic($_.MainWindowHandle) } |
+            Sort-Object { if ($_.MainWindowTitle -like '*codigo-relatorio1*') { 0 } else { 1 } } | Select-Object -First 1
+    if ($code) {
+        $h = $code.MainWindowHandle
+        $r = New-Object JanelaCaptura+RECT
+        [void][JanelaCaptura]::GetWindowRect($h, [ref]$r)
+        $w = $r.Right - $r.Left; $a = $r.Bottom - $r.Top
+        $bmp = New-Object System.Drawing.Bitmap $w, $a
+        $g = [System.Drawing.Graphics]::FromImage($bmp)
+        $hdc = $g.GetHdc(); $ok = [JanelaCaptura]::PrintWindow($h, $hdc, 2); $g.ReleaseHdc($hdc)
+        # confere se a imagem tem conteúdo (algumas placas de vídeo devolvem a janela toda preta)
+        $cores = @{}; foreach ($k in 1..40) { $cores[$bmp.GetPixel([int]($w * $k / 41), [int]($a * (($k * 7) % 41) / 41)).ToArgb()] = 1 }
+        if ($ok -and $cores.Count -gt 2) {
+            $v = New-Object JanelaCaptura+RECT
+            if ([JanelaCaptura]::DwmGetWindowAttribute($h, 9, [ref]$v, 16) -eq 0) {
+                $rect = New-Object System.Drawing.Rectangle ($v.Left - $r.Left), ($v.Top - $r.Top), ($v.Right - $v.Left), ($v.Bottom - $v.Top)
+                $rect.Intersect((New-Object System.Drawing.Rectangle 0, 0, $w, $a))
+                $final = $bmp.Clone($rect, $bmp.PixelFormat); $final.Save($arq, [System.Drawing.Imaging.ImageFormat]::Png); $final.Dispose()
+            } else { $bmp.Save($arq, [System.Drawing.Imaging.ImageFormat]::Png) }
+            $g.Dispose(); $bmp.Dispose()
+            Write-Host "  [print salvo: evidencias\$Nome.png]" -ForegroundColor DarkGray
+            return
+        }
+        $g.Dispose(); $bmp.Dispose()
+    }
+    # alternativa: janela em primeiro plano
     $h = [JanelaCaptura]::GetForegroundWindow()
     $r = New-Object JanelaCaptura+RECT
     if ([JanelaCaptura]::DwmGetWindowAttribute($h, 9, [ref]$r, 16) -ne 0) { [void][JanelaCaptura]::GetWindowRect($h, [ref]$r) }
@@ -49,10 +79,9 @@ function Capturar([string]$Nome) {
     $bmp = New-Object System.Drawing.Bitmap $w, $a
     $g = [System.Drawing.Graphics]::FromImage($bmp)
     $g.CopyFromScreen($l, $t, 0, 0, $bmp.Size)
-    $arq = Join-Path $Evid "$Nome.png"
     $bmp.Save($arq, [System.Drawing.Imaging.ImageFormat]::Png)
     $g.Dispose(); $bmp.Dispose()
-    Write-Host "  [print salvo: evidencias\$Nome.png]" -ForegroundColor DarkGray
+    Write-Host "  [print salvo (janela em primeiro plano): evidencias\$Nome.png]" -ForegroundColor DarkYellow
 }
 
 function Figura([string]$Nome, [string]$Titulo) {
