@@ -133,6 +133,17 @@ Seed__UsuarioSenha=
     $env:ASPNETCORE_ENVIRONMENT = 'Development'
     Write-Host "Código de saída do processo: $($p.ExitCode)" -ForegroundColor Yellow
     Get-Content $erro -Encoding Oem | Select-Object -First 6 | ForEach-Object { Write-Host "  $_" -ForegroundColor Red }
+    Passo 'Mesma inicialização com a variável definida externamente (sem banco acessível): liveness responde'
+    $env:ASPNETCORE_ENVIRONMENT = 'Production'; $env:ASPNETCORE_URLS = 'http://localhost:5099'
+    $env:ConnectionStrings__DefaultConnection = 'Server=sem-banco'
+    $p2 = Start-Process -FilePath $exe -WorkingDirectory $Web -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $Tmp 'prod-com-cs.log') -RedirectStandardError (Join-Path $Tmp 'prod-com-cs.err.log')
+    Remove-Item env:ConnectionStrings__DefaultConnection -ErrorAction SilentlyContinue
+    $env:ASPNETCORE_ENVIRONMENT = 'Development'
+    $codigo = ''
+    for ($i = 0; $i -lt 30; $i++) { Start-Sleep -Milliseconds 700; $codigo = & curl.exe -s -o NUL -w '%{http_code}' 'http://localhost:5099/health/live'; if ($codigo -eq '200') { break } }
+    Write-Host "  GET http://localhost:5099/health/live => HTTP $codigo" -ForegroundColor $(if ($codigo -eq '200') { 'Green' } else { 'Red' })
+    if ($codigo -ne '200') { Get-Content (Join-Path $Tmp 'prod-com-cs.err.log') -Encoding Oem -ErrorAction SilentlyContinue | Select-Object -First 15 | ForEach-Object { Write-Host "  $_" -ForegroundColor Red } }
+    Stop-Process -Id $p2.Id -Force -ErrorAction SilentlyContinue
     Capturar 'Fig_8_4'
 
     # ---------------------------------------------------------------- Fig. 8.2 / 8.3 – Docker

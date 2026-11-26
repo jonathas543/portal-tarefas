@@ -239,7 +239,9 @@ app.MapControllers().RequireRateLimiting("api");   // API (rotas por atributo), 
 app.MapControllerRoute(name: "default",
     pattern: "{controller=TarefasMvc}/{action=Index}/{id?}");   // interface MVC
 
-// SPA servida pela API: rotas do React que não são /api nem /health caem no index.html
-app.MapFallbackToFile("/{*path:regex(^(?!api/|health/).*)}", "index.html");
+// SPA servida pela API: rotas do React caem no index.html; /api e /health inexistentes continuam 404
+app.MapFallback("/api/{**resto}", () => Results.NotFound());
+app.MapFallback("/health/{**resto}", () => Results.NotFound());
+app.MapFallbackToFile("{*path:nonfile}", "index.html");
 
 app.Run();
