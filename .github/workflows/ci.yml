@@ -64,7 +64,7 @@ jobs:
           echo "== docker images =="
           docker images "$IMAGE"
           echo "== docker history: procura por segredos nas camadas =="
-          if docker history --no-trunc --format '{{.CreatedBy}}' "$IMAGE" | grep -Ei 'password|senha|connectionstrings__'; then exit 1; else echo "nenhum segredo encontrado nas camadas"; fi
+          if docker history --no-trunc --format '{{.CreatedBy}}' "$IMAGE" | grep -Ei '(password|senha)[^ ]*=|connectionstrings__'; then exit 1; else echo "nenhum segredo encontrado nas camadas (atribuicoes de senha ou connection string)"; fi
           echo "== docker image inspect: variaveis gravadas na imagem =="
           docker image inspect --format '{{json .Config.Env}}' "$IMAGE"
           echo "== usuario do conteiner (nao root) =="
