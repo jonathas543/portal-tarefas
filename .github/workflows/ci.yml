@@ -59,6 +59,20 @@ jobs:
         run: |
           docker run -d --name smoke -p 8080:8080 -e ConnectionStrings__DefaultConnection="Server=ci-sem-banco" "$IMAGE"
           curl --retry 15 --retry-delay 2 --retry-connrefused -fsS http://localhost:8080/health/live
+      - name: Segredos na imagem (docker history e docker inspect)
+        run: |
+          echo "== docker images =="
+          docker images "$IMAGE"
+          echo "== docker history: procura por segredos nas camadas =="
+          if docker history --no-trunc --format '{{.CreatedBy}}' "$IMAGE" | grep -Ei 'password|senha|connectionstrings__'; then exit 1; else echo "nenhum segredo encontrado nas camadas"; fi
+          echo "== docker image inspect: variaveis gravadas na imagem =="
+          docker image inspect --format '{{json .Config.Env}}' "$IMAGE"
+          echo "== usuario do conteiner (nao root) =="
+          docker exec smoke id
+          echo "== curl -i http://localhost:8080/health/live =="
+          curl -s -i http://localhost:8080/health/live
+          echo
+          docker ps --filter name=smoke
       - name: Publicar no GHCR
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
