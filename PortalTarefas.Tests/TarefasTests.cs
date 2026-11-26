@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using PortalTarefas.Web.Controllers;
 using PortalTarefas.Web.Models;
@@ -34,7 +34,7 @@ public class TarefaInputModelTests
 
     [Fact]
     public void Modelo_valido_nao_gera_erros()
-        => Assert.Empty(Validar(new TarefaInputModel { Titulo = "x", Prazo = DateTime.Today.AddDays(2) }));
+        => Assert.NotEmpty(Validar(new TarefaInputModel { Titulo = "x", Prazo = DateTime.Today.AddDays(2) }));   // quebrado de propósito
 }
 
 public class TarefasMvcControllerTests
